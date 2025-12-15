@@ -17,7 +17,7 @@
     <div class="landing-container">
         <div class="landing-content">
             <div class="landing-header">
-                <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="landing-logo">
+                <img src="/static/images/code-vectra-dark-bgl.png" alt="Code Vectra" class="landing-logo" id="landingLogo">
                 <h1>Code Vectra</h1>
                 <p class="landing-subtitle">Local Code Search Engine</p>
                 <p class="landing-description">Effortlessly search through your local codebase with lightning-fast pattern matching and intelligent filtering.</p>
@@ -43,7 +43,7 @@
         <div class="header-content">
             <div class="logo">
                 <a href="/" class="logo-link">
-                    <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="header-logo">
+                    <img src="/static/images/code-vectra-dark-bgl.png" alt="Code Vectra" class="header-logo" id="headerLogo">
                     <h1>Code Vectra</h1>
                 </a>
             </div>
@@ -95,36 +95,32 @@
             <div class="filter-section">
                 <h3>Language</h3>
                 <div class="language-filters">
-                    <div class="filter-item {% if not file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="" id="lang_all" {% if not file_extensions %}checked{% endif %}>
-                        <label for="lang_all">All languages</label>
-                    </div>
                     <div class="filter-item {% if file_extensions and '.py' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="py" id="lang_py" {% if file_extensions and '.py' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="py" id="lang_py" {% if file_extensions and '.py' in file_extensions %}checked{% endif %}>
                         <label for="lang_py">Python</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.js' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="js" id="lang_js" {% if file_extensions and '.js' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="js" id="lang_js" {% if file_extensions and '.js' in file_extensions %}checked{% endif %}>
                         <label for="lang_js">JavaScript</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.ts' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="ts" id="lang_ts" {% if file_extensions and '.ts' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="ts" id="lang_ts" {% if file_extensions and '.ts' in file_extensions %}checked{% endif %}>
                         <label for="lang_ts">TypeScript</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.java' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="java" id="lang_java" {% if file_extensions and '.java' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="java" id="lang_java" {% if file_extensions and '.java' in file_extensions %}checked{% endif %}>
                         <label for="lang_java">Java</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.cpp' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="cpp" id="lang_cpp" {% if file_extensions and '.cpp' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="cpp" id="lang_cpp" {% if file_extensions and '.cpp' in file_extensions %}checked{% endif %}>
                         <label for="lang_cpp">C++</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.go' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="go" id="lang_go" {% if file_extensions and '.go' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="go" id="lang_go" {% if file_extensions and '.go' in file_extensions %}checked{% endif %}>
                         <label for="lang_go">Go</label>
                     </div>
                     <div class="filter-item {% if file_extensions and '.rs' in file_extensions %}active{% endif %}">
-                        <input type="radio" name="lang_filter" value="rs" id="lang_rs" {% if file_extensions and '.rs' in file_extensions %}checked{% endif %}>
+                        <input type="checkbox" name="lang_filter" value="rs" id="lang_rs" {% if file_extensions and '.rs' in file_extensions %}checked{% endif %}>
                         <label for="lang_rs">Rust</label>
                     </div>
                 </div>
@@ -242,11 +238,26 @@
         if (savedTheme === 'light') {
             document.body.classList.add('light');
         }
+        updateLogos(savedTheme);
 
         function toggleTheme() {
             document.body.classList.toggle('light');
             const theme = document.body.classList.contains('light') ? 'light' : 'dark';
             localStorage.setItem('theme', theme);
+            updateLogos(theme);
+        }
+
+        function updateLogos(theme) {
+            const landingLogo = document.getElementById('landingLogo');
+            const headerLogo = document.getElementById('headerLogo');
+            
+            if (theme === 'light') {
+                if (landingLogo) landingLogo.src = '/static/images/code-vectra-bgl.png';
+                if (headerLogo) headerLogo.src = '/static/images/code-vectra-bgl.png';
+            } else {
+                if (landingLogo) landingLogo.src = '/static/images/code-vectra-dark-bgl.png';
+                if (headerLogo) headerLogo.src = '/static/images/code-vectra-dark-bgl.png';
+            }
         }
 
         // Focus search input on page load
@@ -355,16 +366,19 @@
             if (e.target.name === 'lang_filter') {
                 const currentQuery = document.getElementById('searchInput').value;
                 if (currentQuery.trim()) {
-                    const langValue = e.target.value;
                     const caseValue = document.getElementById('case_sensitive').checked;
                     
-                    let newQuery = currentQuery;
-                    // Remove existing extension filters
-                    newQuery = newQuery.replace(/\s*\+\s*[a-zA-Z0-9,\s]+$/, '').trim();
+                    // Get all checked language filters
+                    const checkedLanguages = Array.from(document.querySelectorAll('input[name="lang_filter"]:checked'))
+                        .map(cb => cb.value);
                     
-                    // Add new language filter if not "all"
-                    if (langValue) {
-                        newQuery += ' + ' + langValue;
+                    let newQuery = currentQuery;
+                    // Remove existing extension filters (everything after +)
+                    newQuery = newQuery.replace(/\s*\+\s*.*$/, '').trim();
+                    
+                    // Add new language filters if any are selected
+                    if (checkedLanguages.length > 0) {
+                        newQuery += ' + ' + checkedLanguages.join(' ');
                     }
                     
                     // Redirect with new query

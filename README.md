@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="static/images/code-vectra-dark-bgl.png" alt="Code Vectra Logo" width="200">
+</div>
+
 # Code Vectra - Local Code Search Engine
 
 A fast, web-based code search engine similar to grep.app that searches through your local codebase.

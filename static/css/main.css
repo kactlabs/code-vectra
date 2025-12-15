@@ -1837,3 +1837,41 @@ body.light .remove-filter:hover {
 body.light .logo-link h1 {
     color: #0066cc;
 }
+/* Language filter checkbox styles */
+.language-filters .filter-item input[type="checkbox"] {
+    margin: 0;
+    margin-right: 8px;
+    transform: scale(1);
+}
+
+.language-filters .filter-item {
+    padding: 6px 0;
+}
+
+.language-filters .filter-item label {
+    font-size: 14px;
+    cursor: pointer;
+    flex: 1;
+    color: #e5e5e5;
+}
+
+body.light .language-filters .filter-item label {
+    color: #1a1a1a;
+}
+
+.language-filters .filter-item:hover label {
+    color: #4a9eff;
+}
+
+body.light .language-filters .filter-item:hover label {
+    color: #0066cc;
+}
+
+.language-filters .filter-item input[type="checkbox"]:checked + label {
+    color: #4a9eff;
+    font-weight: 500;
+}
+
+body.light .language-filters .filter-item input[type="checkbox"]:checked + label {
+    color: #0066cc;
+}
