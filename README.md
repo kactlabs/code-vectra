@@ -122,6 +122,26 @@ Code Vectra automatically skips sensitive files during search to protect your cr
 You can disable this feature by setting `SKIP_SENSITIVE_FILES=false` in your `.env` file, but this is not recommended for security reasons.
 
 
+## License
+
+This project is licensed under the [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially
+
+The only requirement is **Attribution** — you must give appropriate credit when using or modifying this work.
+
+## Contributing
+
+Contributions are welcome! Feel free to:
+- Fork the repository
+- Submit pull requests
+- Report issues
+- Suggest new features
+
+Since this project uses CC BY 4.0 license, you're encouraged to build upon and improve Code Vectra for your own needs.
+
 ### Screenshots
 ![1765808266623](image/README/1765808266623.png)
 
