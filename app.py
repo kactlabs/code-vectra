@@ -8,15 +8,19 @@ import mimetypes
 import time
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+from dotenv import load_dotenv
 import uvicorn
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Configuration
-SEARCH_ROOT = "/Users/csp/kact/"
-MAX_FILE_SIZE = 1024 * 1024  # 1MB
+# Configuration from environment variables
+SEARCH_ROOT = os.getenv("SEARCH_ROOT", "/Users/csp/kact/")
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", "1048576"))  # Default 1MB
 SUPPORTED_EXTENSIONS = {
     '.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.sass',
     '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go',
@@ -141,7 +145,8 @@ async def main(request: Request):
         "query": "", 
         "results": [], 
         "search_performed": False,
-        "search_time": 0.0
+        "search_time": 0.0,
+        "search_root": SEARCH_ROOT
     })
 
 @app.get("/search", response_class=HTMLResponse)
@@ -160,7 +165,8 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
         "search_performed": search_performed,
         "case_sensitive": case,
         "result_count": len(results),
-        "search_time": round(search_time, 2)
+        "search_time": round(search_time, 2),
+        "search_root": SEARCH_ROOT
     })
 
 @app.post("/search", response_class=HTMLResponse)
@@ -179,7 +185,8 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
         "search_performed": search_performed,
         "case_sensitive": case_sensitive,
         "result_count": len(results),
-        "search_time": round(search_time, 2)
+        "search_time": round(search_time, 2),
+        "search_root": SEARCH_ROOT
     })
 
 @app.get("/file/{file_path:path}", response_class=HTMLResponse)
@@ -252,4 +259,6 @@ async def view_file(request: Request, file_path: str):
         })
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8001"))
+    uvicorn.run(app, host=host, port=port)

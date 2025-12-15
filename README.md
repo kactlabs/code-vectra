@@ -22,17 +22,30 @@ A fast, web-based code search engine similar to grep.app that searches through y
 pip install -r requirements.txt
 ```
 
-2. Update the search path in `app.py`:
-```python
-SEARCH_ROOT = "/path/to/your/code/directory"
+2. Copy the environment configuration:
+```bash
+cp .env.sample .env
 ```
 
-3. Run the application:
+3. Edit `.env` file to configure your search directory:
+```bash
+# Directory to search for code files
+SEARCH_ROOT=/path/to/your/code/directory
+
+# Maximum file size to search (in bytes)
+MAX_FILE_SIZE=1048576
+
+# Server configuration
+HOST=0.0.0.0
+PORT=8001
+```
+
+4. Run the application:
 ```bash
 python app.py
 ```
 
-4. Open your browser to `http://localhost:8001`
+5. Open your browser to `http://localhost:8001`
 
 ## Usage
 
@@ -59,11 +72,14 @@ The search engine automatically detects and searches common code file types incl
 
 ## Configuration
 
-You can customize the search behavior by modifying these variables in `app.py`:
+You can customize the search behavior by modifying the `.env` file:
 
 - `SEARCH_ROOT`: Directory to search in
 - `MAX_FILE_SIZE`: Maximum file size to search (default: 1MB)
-- `SUPPORTED_EXTENSIONS`: File extensions to include in search
+- `HOST`: Server host (default: 0.0.0.0)
+- `PORT`: Server port (default: 8001)
+
+The supported file extensions are defined in `app.py` and include most common programming languages.
 
 
 ### Screenshots
