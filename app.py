@@ -22,6 +22,7 @@ templates = Jinja2Templates(directory="templates")
 SEARCH_ROOT = os.getenv("SEARCH_ROOT", "/Users/csp/kact/")
 MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", "1048576"))  # Default 1MB
 RESULTS_PER_PAGE = int(os.getenv("RESULTS_PER_PAGE", "25"))  # Default 25 results per page
+SKIP_SENSITIVE_FILES = os.getenv("SKIP_SENSITIVE_FILES", "true").lower() == "true"
 SUPPORTED_EXTENSIONS = {
     '.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.sass',
     '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go',
@@ -31,6 +32,68 @@ SUPPORTED_EXTENSIONS = {
     '.md', '.rst', '.txt', '.log', '.conf', '.config',
     '.dockerfile', '.makefile', '.cmake', '.gradle', '.maven'
 }
+
+def should_skip_file(filename: str) -> bool:
+    """Check if a file should be skipped during search"""
+    # Convert to lowercase for case-insensitive matching
+    filename_lower = filename.lower()
+    
+    # Skip environment files
+    if filename_lower in {'.env', '.env.local', '.env.development', '.env.production', 
+                         '.env.staging', '.env.test', '.env.example', '.env.sample'}:
+        return True
+    
+    # Skip other sensitive/config files
+    sensitive_files = {
+        # Credentials and keys
+        '.aws', '.ssh', 'id_rsa', 'id_dsa', 'id_ecdsa', 'id_ed25519',
+        'private.key', 'private.pem', 'certificate.pem',
+        
+        # Database files
+        '*.db', '*.sqlite', '*.sqlite3',
+        
+        # Log files
+        '*.log', 'npm-debug.log', 'yarn-error.log',
+        
+        # OS files
+        '.ds_store', 'thumbs.db', 'desktop.ini',
+        
+        # IDE files
+        '.vscode', '.idea', '*.swp', '*.swo', '*~',
+        
+        # Package manager files
+        'package-lock.json', 'yarn.lock', 'composer.lock', 'pipfile.lock',
+        
+        # Build artifacts
+        '*.min.js', '*.min.css', '*.bundle.js', '*.chunk.js',
+        
+        # Other config files that might contain sensitive data
+        'docker-compose.override.yml', 'docker-compose.prod.yml',
+        '.htpasswd', '.htaccess', 'web.config'
+    }
+    
+    # Check exact filename matches
+    if filename_lower in sensitive_files:
+        return True
+    
+    # Check pattern matches (for wildcards)
+    import fnmatch
+    for pattern in sensitive_files:
+        if '*' in pattern and fnmatch.fnmatch(filename_lower, pattern):
+            return True
+    
+    # Skip files with sensitive extensions
+    sensitive_extensions = {
+        '.key', '.pem', '.p12', '.pfx', '.keystore', '.jks',
+        '.crt', '.cer', '.der', '.csr',
+        '.password', '.passwd', '.secret'
+    }
+    
+    file_ext = Path(filename).suffix.lower()
+    if file_ext in sensitive_extensions:
+        return True
+    
+    return False
 
 def is_text_file(file_path: str) -> bool:
     """Check if a file is likely to be a text file"""
@@ -124,6 +187,10 @@ def search_code(query: str, case_sensitive: bool = False, file_extensions: Optio
             
             for file in files:
                 if file.startswith('.'):
+                    continue
+                
+                # Skip sensitive and configuration files
+                if SKIP_SENSITIVE_FILES and should_skip_file(file):
                     continue
                 
                 # Filter by file extensions if specified
@@ -369,6 +436,7 @@ async def debug_files():
     """Debug endpoint to see what files are found"""
     py_files = []
     all_files = []
+    skipped_files = []
     
     for root, dirs, files in os.walk(SEARCH_ROOT):
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {
@@ -379,9 +447,14 @@ async def debug_files():
         for file in files:
             if file.startswith('.'):
                 continue
-                
+            
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, SEARCH_ROOT)
+            
+            if SKIP_SENSITIVE_FILES and should_skip_file(file):
+                skipped_files.append(relative_path)
+                continue
+                
             all_files.append(relative_path)
             
             if file.endswith('.py'):
@@ -390,9 +463,11 @@ async def debug_files():
     return {
         "search_root": SEARCH_ROOT,
         "total_files": len(all_files),
+        "skipped_files_count": len(skipped_files),
         "py_files_count": len(py_files),
         "py_files": py_files[:20],  # Show first 20 Python files
-        "all_files_sample": all_files[:20]  # Show first 20 files
+        "all_files_sample": all_files[:20],  # Show first 20 files
+        "skipped_files_sample": skipped_files[:20]  # Show first 20 skipped files
     }
 
 if __name__ == "__main__":

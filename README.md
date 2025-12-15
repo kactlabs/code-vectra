@@ -39,6 +39,9 @@ MAX_FILE_SIZE=1048576
 # Pagination settings
 RESULTS_PER_PAGE=25
 
+# Security settings
+SKIP_SENSITIVE_FILES=true
+
 # Server configuration
 HOST=0.0.0.0
 PORT=8001
@@ -93,10 +96,26 @@ You can customize the search behavior by modifying the `.env` file:
 - `SEARCH_ROOT`: Directory to search in
 - `MAX_FILE_SIZE`: Maximum file size to search (default: 1MB)
 - `RESULTS_PER_PAGE`: Number of search results per page (default: 25)
+- `SKIP_SENSITIVE_FILES`: Skip sensitive files like .env, keys, etc. (default: true)
 - `HOST`: Server host (default: 0.0.0.0)
 - `PORT`: Server port (default: 8001)
 
 The supported file extensions are defined in `app.py` and include most common programming languages.
+
+## Security Features
+
+Code Vectra automatically skips sensitive files during search to protect your credentials and private data:
+
+**Skipped Files:**
+- Environment files: `.env`, `.env.local`, `.env.production`, etc.
+- SSH keys: `id_rsa`, `id_dsa`, `private.key`, etc.
+- Certificates: `*.pem`, `*.crt`, `*.key`, etc.
+- Database files: `*.db`, `*.sqlite`, `*.sqlite3`
+- Log files: `*.log`, `npm-debug.log`, etc.
+- Lock files: `package-lock.json`, `yarn.lock`, etc.
+- Minified files: `*.min.js`, `*.min.css`, etc.
+
+You can disable this feature by setting `SKIP_SENSITIVE_FILES=false` in your `.env` file, but this is not recommended for security reasons.
 
 
 ### Screenshots
