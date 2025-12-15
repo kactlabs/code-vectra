@@ -23,7 +23,7 @@
                 <p class="landing-description">Effortlessly search through your local codebase with lightning-fast pattern matching and intelligent filtering.</p>
             </div>
             
-            <form action="/search" method="POST" class="landing-search-form">
+            <form action="/" method="POST" class="landing-search-form">
                 <div class="landing-search-container">
                     <input type="text" 
                            name="query" 
@@ -47,7 +47,7 @@
                     <h1>Code Vectra</h1>
                 </a>
             </div>
-            <form action="/search" method="POST" class="top-search-form">
+            <form action="/" method="POST" class="top-search-form">
                 <div class="search-input-container">
                     <input type="text" 
                            name="query" 
@@ -186,7 +186,7 @@
             <div class="pagination-container">
                 <div class="pagination">
                     {% if pagination.has_prev %}
-                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.prev_page}}" class="pagination-btn prev-next">
+                        <a href="/?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.prev_page}}" class="pagination-btn prev-next">
                             ← Previous
                         </a>
                     {% endif %}
@@ -196,7 +196,7 @@
                         {% set end_page = [pagination.total_pages, pagination.current_page + 2]|min %}
                         
                         {% if start_page > 1 %}
-                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page=1" class="pagination-number">1</a>
+                            <a href="/?q={{query|urlencode}}&case={{case_sensitive|lower}}&page=1" class="pagination-number">1</a>
                             {% if start_page > 2 %}
                                 <span class="pagination-ellipsis">...</span>
                             {% endif %}
@@ -206,7 +206,7 @@
                             {% if page_num == pagination.current_page %}
                                 <span class="pagination-number current">{{page_num}}</span>
                             {% else %}
-                                <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{page_num}}" class="pagination-number">{{page_num}}</a>
+                                <a href="/?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{page_num}}" class="pagination-number">{{page_num}}</a>
                             {% endif %}
                         {% endfor %}
                         
@@ -214,12 +214,12 @@
                             {% if end_page < pagination.total_pages - 1 %}
                                 <span class="pagination-ellipsis">...</span>
                             {% endif %}
-                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.total_pages}}" class="pagination-number">{{pagination.total_pages}}</a>
+                            <a href="/?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.total_pages}}" class="pagination-number">{{pagination.total_pages}}</a>
                         {% endif %}
                     </div>
                     
                     {% if pagination.has_next %}
-                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.next_page}}" class="pagination-btn prev-next">
+                        <a href="/?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.next_page}}" class="pagination-btn prev-next">
                             Next →
                         </a>
                     {% endif %}
@@ -346,7 +346,7 @@
             }
             
             const caseValue = document.getElementById('case_sensitive').checked;
-            const url = `/search?q=${encodeURIComponent(query)}&case=${caseValue}`;
+            const url = `/?q=${encodeURIComponent(query)}&case=${caseValue}`;
             window.location.href = url;
         }
 
@@ -368,7 +368,7 @@
                     }
                     
                     // Redirect with new query
-                    const url = `/search?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
+                    const url = `/?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
                     window.location.href = url;
                 }
             }
@@ -391,7 +391,7 @@
                     }
                     
                     const caseValue = document.getElementById('case_sensitive').checked;
-                    const url = `/search?q=${encodeURIComponent(newQuery.trim())}&case=${caseValue}`;
+                    const url = `/?q=${encodeURIComponent(newQuery.trim())}&case=${caseValue}`;
                     window.location.href = url;
                 }
             }
@@ -400,7 +400,7 @@
                 const currentQuery = document.getElementById('searchInput').value;
                 if (currentQuery.trim()) {
                     const caseValue = e.target.checked;
-                    const url = `/search?q=${encodeURIComponent(currentQuery)}&case=${caseValue}`;
+                    const url = `/?q=${encodeURIComponent(currentQuery)}&case=${caseValue}`;
                     window.location.href = url;
                 }
             }
@@ -420,7 +420,7 @@
                 });
                 
                 const caseValue = document.getElementById('case_sensitive').checked;
-                const url = `/search?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
+                const url = `/?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
                 window.location.href = url;
             }
         }

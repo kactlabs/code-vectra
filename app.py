@@ -24,24 +24,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
-async def main(request: Request):
-    folders = get_direct_folders()
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "query": "", 
-        "clean_query": "",
-        "file_extensions": None,
-        "results": [], 
-        "search_performed": False,
-        "search_time": 0.0,
-        "total_results": 0,
-        "pagination": {},
-        "search_root": SEARCH_ROOT,
-        "folders": folders
-    })
-
-@app.get("/search", response_class=HTMLResponse)
-async def search_get(request: Request, q: str = Query(""), case: bool = Query(False), page: int = Query(1)):
+async def main_get(request: Request, q: str = Query(""), case: bool = Query(False), page: int = Query(1)):
     results = []
     search_time = 0.0
     search_performed = bool(q.strip())
@@ -74,8 +57,8 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
         "folders": folders
     })
 
-@app.post("/search", response_class=HTMLResponse)
-async def search_post(request: Request, query: str = Form(""), case_sensitive: bool = Form(False)):
+@app.post("/", response_class=HTMLResponse)
+async def main_post(request: Request, query: str = Form(""), case_sensitive: bool = Form(False)):
     results = []
     search_time = 0.0
     search_performed = bool(query.strip())
