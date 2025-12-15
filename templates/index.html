@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Search - Local Grep</title>
+    <title>Code Vectra - Local Grep</title>
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 
@@ -14,7 +14,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>🔍 Code Search</h1>
+            <h1>🔍 Code Vectra</h1>
             <p class="subtitle">Search through code in /Users/csp/kact/</p>
         </div>
 
@@ -43,9 +43,9 @@
         {% if search_performed %}
         <div class="results-header">
             {% if results %}
-                <p class="results-count">Found {{result_count}} matches</p>
+                <p class="results-count">Found {{result_count}} matches (time taken: {{search_time}} seconds)</p>
             {% else %}
-                <p class="no-results">No matches found for "{{query}}"</p>
+                <p class="no-results">No matches found for "{{query}}" (time taken: {{search_time}} seconds)</p>
             {% endif %}
         </div>
 
@@ -53,7 +53,7 @@
             {% for result in results %}
             <div class="result-item">
                 <div class="result-header">
-                    <span class="file-path">{{result.relative_path}}</span>
+                    <a href="/file/{{result.relative_path}}" class="file-path-link">{{result.relative_path}}</a>
                     <span class="line-number">Line {{result.line_number}}</span>
                 </div>
                 

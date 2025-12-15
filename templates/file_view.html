@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{file_path}} - Code Vectra</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
+
+    <div class="file-viewer">
+        <div class="file-header">
+            <div class="breadcrumb">
+                <a href="/" class="back-link">← Back to Search</a>
+                <span class="separator">/</span>
+                <span class="file-name">{{file_path}}</span>
+            </div>
+            
+            <div class="file-actions">
+                <button onclick="copyFileContent()" class="action-btn" title="Copy entire file">
+                    📋 Copy All
+                </button>
+                <button onclick="downloadFile()" class="action-btn" title="Download file">
+                    ⬇️ Download
+                </button>
+            </div>
+        </div>
+
+        <div class="file-stats">
+            <span class="stat">{{line_count}} lines</span>
+            <span class="stat">{{language}} file</span>
+        </div>
+
+        <div class="code-container">
+            <div class="line-numbers">
+                {% for i in range(1, line_count + 1) %}
+                <div class="line-number" data-line="{{i}}">{{i}}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="code-content">
+                <pre><code class="language-{{language}}" id="code-block">{{content}}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard</div>
+
+    <script>
+        // Load theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+            updateHighlightTheme();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            const theme = document.body.classList.contains('light') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            updateHighlightTheme();
+        }
+
+        function updateHighlightTheme() {
+            const isLight = document.body.classList.contains('light');
+            const link = document.querySelector('link[href*="highlight.js"]');
+            if (link) {
+                link.href = isLight 
+                    ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
+                    : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+            }
+        }
+
+        // Initialize syntax highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+            
+            // Add click handlers to line numbers for copying individual lines
+            document.querySelectorAll('.line-number').forEach(function(lineNum) {
+                lineNum.addEventListener('click', function() {
+                    const lineNumber = parseInt(this.dataset.line);
+                    copyLine(lineNumber);
+                });
+            });
+        });
+
+        function copyLine(lineNumber) {
+            const lines = {{lines|tojson}};
+            if (lineNumber > 0 && lineNumber <= lines.length) {
+                const lineContent = lines[lineNumber - 1];
+                navigator.clipboard.writeText(lineContent).then(function() {
+                    showToast(`Line ${lineNumber} copied to clipboard`);
+                });
+            }
+        }
+
+        function copyFileContent() {
+            const content = {{content|tojson}};
+            navigator.clipboard.writeText(content).then(function() {
+                showToast('Entire file copied to clipboard');
+            });
+        }
+
+        function downloadFile() {
+            const content = {{content|tojson}};
+            const filename = '{{file_path}}'.split('/').pop();
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            showToast('File downloaded');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + A to copy all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a' && e.shiftKey) {
+                e.preventDefault();
+                copyFileContent();
+            }
+            // Escape to go back
+            if (e.key === 'Escape') {
+                window.history.back();
+            }
+        });
+    </script>
+</body>
+
+</html>

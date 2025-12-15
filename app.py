@@ -5,8 +5,9 @@ from fastapi.staticfiles import StaticFiles
 import os
 import re
 import mimetypes
+import time
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import uvicorn
 
 app = FastAPI()
@@ -88,10 +89,12 @@ def search_in_file(file_path: str, pattern: str, case_sensitive: bool = False) -
     
     return results
 
-def search_code(query: str, case_sensitive: bool = False, max_results: int = 100) -> List[Dict]:
+def search_code(query: str, case_sensitive: bool = False, max_results: int = 100) -> Tuple[List[Dict], float]:
     """Search for code patterns in the specified directory"""
+    start_time = time.time()
+    
     if not query.strip():
-        return []
+        return [], 0.0
     
     all_results = []
     file_count = 0
@@ -126,7 +129,10 @@ def search_code(query: str, case_sensitive: bool = False, max_results: int = 100
     except Exception as e:
         print(f"Error during search: {e}")
     
-    return all_results[:max_results]
+    end_time = time.time()
+    search_time = end_time - start_time
+    
+    return all_results[:max_results], search_time
 
 @app.get("/", response_class=HTMLResponse)
 async def main(request: Request):
@@ -134,16 +140,18 @@ async def main(request: Request):
         "request": request, 
         "query": "", 
         "results": [], 
-        "search_performed": False
+        "search_performed": False,
+        "search_time": 0.0
     })
 
 @app.get("/search", response_class=HTMLResponse)
 async def search_get(request: Request, q: str = Query(""), case: bool = Query(False)):
     results = []
+    search_time = 0.0
     search_performed = bool(q.strip())
     
     if search_performed:
-        results = search_code(q, case)
+        results, search_time = search_code(q, case)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -151,16 +159,18 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
         "results": results,
         "search_performed": search_performed,
         "case_sensitive": case,
-        "result_count": len(results)
+        "result_count": len(results),
+        "search_time": round(search_time, 2)
     })
 
 @app.post("/search", response_class=HTMLResponse)
 async def search_post(request: Request, query: str = Form(""), case_sensitive: bool = Form(False)):
     results = []
+    search_time = 0.0
     search_performed = bool(query.strip())
     
     if search_performed:
-        results = search_code(query, case_sensitive)
+        results, search_time = search_code(query, case_sensitive)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -168,8 +178,78 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
         "results": results,
         "search_performed": search_performed,
         "case_sensitive": case_sensitive,
-        "result_count": len(results)
+        "result_count": len(results),
+        "search_time": round(search_time, 2)
     })
+
+@app.get("/file/{file_path:path}", response_class=HTMLResponse)
+async def view_file(request: Request, file_path: str):
+    """View the content of a specific file"""
+    try:
+        full_path = os.path.join(SEARCH_ROOT, file_path)
+        
+        # Security check - ensure the file is within the search root
+        if not os.path.abspath(full_path).startswith(os.path.abspath(SEARCH_ROOT)):
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error": "Access denied: File outside search directory"
+            })
+        
+        if not os.path.exists(full_path):
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error": f"File not found: {file_path}"
+            })
+        
+        if not is_text_file(full_path):
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error": f"Cannot display binary file: {file_path}"
+            })
+        
+        if os.path.getsize(full_path) > MAX_FILE_SIZE:
+            return templates.TemplateResponse("error.html", {
+                "request": request,
+                "error": f"File too large to display: {file_path}"
+            })
+        
+        # Read file content
+        with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        # Split into lines for display
+        lines = content.split('\n')
+        
+        # Detect file language for syntax highlighting
+        file_ext = Path(file_path).suffix.lower()
+        language_map = {
+            '.py': 'python', '.js': 'javascript', '.ts': 'typescript',
+            '.jsx': 'javascript', '.tsx': 'typescript', '.html': 'html',
+            '.css': 'css', '.scss': 'scss', '.sass': 'sass',
+            '.java': 'java', '.cpp': 'cpp', '.c': 'c', '.h': 'c',
+            '.cs': 'csharp', '.php': 'php', '.rb': 'ruby',
+            '.go': 'go', '.rs': 'rust', '.swift': 'swift',
+            '.kt': 'kotlin', '.scala': 'scala', '.sh': 'bash',
+            '.sql': 'sql', '.json': 'json', '.xml': 'xml',
+            '.yaml': 'yaml', '.yml': 'yaml', '.md': 'markdown'
+        }
+        
+        language = language_map.get(file_ext, 'text')
+        
+        return templates.TemplateResponse("file_view.html", {
+            "request": request,
+            "file_path": file_path,
+            "content": content,
+            "lines": lines,
+            "language": language,
+            "line_count": len(lines)
+        })
+        
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "error": f"Error reading file: {str(e)}"
+        })
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Code Vectra</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
+
+    <div class="container">
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h1>Error</h1>
+            <p class="error-message">{{error}}</p>
+            <a href="/" class="back-button">← Back to Search</a>
+        </div>
+    </div>
+
+    <script>
+        // Load theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            const theme = document.body.classList.contains('light') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+        }
+    </script>
+</body>
+
+</html>

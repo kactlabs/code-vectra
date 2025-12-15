@@ -1,4 +1,4 @@
-# Local Code Search Engine
+# Code Vectra - Local Code Search Engine
 
 A fast, web-based code search engine similar to grep.app that searches through your local codebase.
 
@@ -11,6 +11,9 @@ A fast, web-based code search engine similar to grep.app that searches through y
 - 📱 **Responsive design** works on desktop and mobile
 - ⚡ **Real-time search** with context highlighting
 - 📋 **Click to copy** code lines
+- 📄 **File viewer** - click on file paths to view complete file content
+- 🎨 **Syntax highlighting** for popular programming languages
+- ⬇️ **Download files** directly from the viewer
 
 ## Setup
 
@@ -37,6 +40,12 @@ python app.py
 - Use the case-sensitive checkbox for exact matches
 - Click on any code line to copy it to clipboard
 - Use `Ctrl/Cmd + K` to quickly focus the search input
+- **Click on file paths** in search results to view the complete file
+- In file viewer:
+  - Click line numbers to copy individual lines
+  - Use "Copy All" to copy the entire file
+  - Use "Download" to save the file locally
+  - Press `Escape` to go back to search results
 
 ## Supported File Types
 
@@ -55,3 +64,9 @@ You can customize the search behavior by modifying these variables in `app.py`:
 - `SEARCH_ROOT`: Directory to search in
 - `MAX_FILE_SIZE`: Maximum file size to search (default: 1MB)
 - `SUPPORTED_EXTENSIONS`: File extensions to include in search
+
+
+### Screenshots
+![1765808266623](image/README/1765808266623.png)
+
+![1765808283556](image/README/1765808283556.png)
