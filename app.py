@@ -260,19 +260,33 @@ def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
     """Parse query to extract file extensions filter"""
     import re
     
-    # Check for "+" separator syntax: "search_term + *.ext"
+    # Check for "+" separator syntax: "search_term + ext" or "search_term + *.ext"
     if '+' in query:
         parts = query.split('+', 1)  # Split on first + only
         if len(parts) == 2:
             search_part = parts[0].strip()
             ext_part = parts[1].strip()
             
-            # Find extension patterns in the second part
+            # First try to find *.ext patterns
             ext_pattern = r'\*\.([a-zA-Z0-9]+)'
             extensions = re.findall(ext_pattern, ext_part)
             
             if extensions:
                 ext_list = ['.' + ext.lower() for ext in extensions]
+                return search_part, ext_list
+            
+            # If no *.ext pattern found, treat the whole ext_part as extension names
+            # Split by spaces and commas to handle multiple extensions
+            ext_names = re.split(r'[,\s]+', ext_part)
+            ext_list = []
+            for ext in ext_names:
+                ext = ext.strip()
+                if ext:  # Skip empty strings
+                    if not ext.startswith('.'):
+                        ext = '.' + ext
+                    ext_list.append(ext.lower())
+            
+            if ext_list:
                 return search_part, ext_list
     
     # Fallback to original logic for backward compatibility
