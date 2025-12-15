@@ -107,11 +107,51 @@
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('line-content')) {
                 const text = e.target.textContent;
-                navigator.clipboard.writeText(text).then(function() {
-                    showToast('Code line copied to clipboard');
-                });
+                copyTextToClipboard(text, 'Code line copied to clipboard');
             }
         });
+
+        function copyTextToClipboard(text, successMessage) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast(successMessage);
+                }).catch(function(err) {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(text, successMessage);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text, successMessage);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, successMessage) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast(successMessage);
+                } else {
+                    showToast('Failed to copy content');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('Copy not supported in this browser');
+            }
+            
+            document.body.removeChild(textArea);
+        }
 
         function showToast(message) {
             const toast = document.getElementById('toast');

@@ -88,23 +88,70 @@
                     copyLine(lineNumber);
                 });
             });
+
+            // Debug: Check if content is loaded properly
+            const content = {{content|tojson}};
+            console.log('File content loaded, length:', content ? content.length : 'null');
         });
 
         function copyLine(lineNumber) {
             const lines = {{lines|tojson}};
             if (lineNumber > 0 && lineNumber <= lines.length) {
                 const lineContent = lines[lineNumber - 1];
-                navigator.clipboard.writeText(lineContent).then(function() {
-                    showToast(`Line ${lineNumber} copied to clipboard`);
-                });
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(lineContent).then(function() {
+                        showToast(`Line ${lineNumber} copied to clipboard`);
+                    }).catch(function(err) {
+                        console.error('Failed to copy line: ', err);
+                        fallbackCopyTextToClipboard(lineContent);
+                    });
+                } else {
+                    fallbackCopyTextToClipboard(lineContent);
+                }
             }
         }
 
         function copyFileContent() {
             const content = {{content|tojson}};
-            navigator.clipboard.writeText(content).then(function() {
-                showToast('Entire file copied to clipboard');
-            });
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(content).then(function() {
+                    showToast('Entire file copied to clipboard');
+                }).catch(function(err) {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(content);
+                });
+            } else {
+                fallbackCopyTextToClipboard(content);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('Entire file copied to clipboard');
+                } else {
+                    showToast('Failed to copy file content');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('Copy not supported in this browser');
+            }
+            
+            document.body.removeChild(textArea);
         }
 
         function downloadFile() {
