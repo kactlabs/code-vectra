@@ -24,7 +24,7 @@
                        name="query" 
                        value="{{query}}" 
                        id="searchInput" 
-                       placeholder="Search for code patterns, functions, variables..."
+                       placeholder="Search for code patterns... (use 'term + *.py' or 'term *.py' to filter)"
                        autocomplete="off">
                 <button type="submit" class="search-btn" title="Search">
                     🔍
@@ -37,15 +37,30 @@
                     <span class="checkmark"></span>
                     Case sensitive
                 </label>
+                <div class="search-help">
+                    <span class="help-text">💡 Tip: Use "term + *.py" or "term *.py *.js" to search specific file types</span>
+                </div>
             </div>
         </form>
 
         {% if search_performed %}
         <div class="results-header">
             {% if results %}
-                <p class="results-count">Found {{result_count}} matches (time taken: {{search_time}} seconds)</p>
+                <p class="results-count">
+                    Found {{result_count}} matches 
+                    {% if file_extensions %}
+                        in {{file_extensions|join(', ')}} files 
+                    {% endif %}
+                    (time taken: {{search_time}} seconds)
+                </p>
             {% else %}
-                <p class="no-results">No matches found for "{{query}}" (time taken: {{search_time}} seconds)</p>
+                <p class="no-results">
+                    No matches found for "{{clean_query}}" 
+                    {% if file_extensions %}
+                        in {{file_extensions|join(', ')}} files 
+                    {% endif %}
+                    (time taken: {{search_time}} seconds)
+                </p>
             {% endif %}
         </div>
 

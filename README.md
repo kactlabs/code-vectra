@@ -51,6 +51,7 @@ python app.py
 
 - Enter search patterns using regex syntax
 - Use the case-sensitive checkbox for exact matches
+- **Filter by file type**: Add `*.py *.js *.ts` to search only specific file extensions
 - Click on any code line to copy it to clipboard
 - Use `Ctrl/Cmd + K` to quickly focus the search input
 - **Click on file paths** in search results to view the complete file
@@ -59,6 +60,17 @@ python app.py
   - Use "Copy All" to copy the entire file
   - Use "Download" to save the file locally
   - Press `Escape` to go back to search results
+
+### Search Examples
+
+**Using + separator:**
+- `gpt-3.5-turbo + *.py` - Search for "gpt-3.5-turbo" only in Python files
+- `function + *.js *.ts` - Search for "function" in JavaScript and TypeScript files
+- `import React + *.jsx *.tsx` - Search for "import React" in React component files
+
+**Using space separator (legacy):**
+- `function *.py` - Search for "function" only in Python files
+- `class.*Component *.py *.js` - Search for class definitions containing "Component" in Python and JavaScript files
 
 ## Supported File Types
 

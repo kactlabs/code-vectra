@@ -61,7 +61,14 @@ def search_in_file(file_path: str, pattern: str, case_sensitive: bool = False) -
             return results
             
         flags = 0 if case_sensitive else re.IGNORECASE
-        regex = re.compile(pattern, flags)
+        
+        # Try to compile the regex pattern, if it fails, escape it and treat as literal
+        try:
+            regex = re.compile(pattern, flags)
+        except re.error:
+            # If regex compilation fails, escape the pattern and treat as literal search
+            escaped_pattern = re.escape(pattern)
+            regex = re.compile(escaped_pattern, flags)
         
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
@@ -93,7 +100,7 @@ def search_in_file(file_path: str, pattern: str, case_sensitive: bool = False) -
     
     return results
 
-def search_code(query: str, case_sensitive: bool = False, max_results: int = 100) -> Tuple[List[Dict], float]:
+def search_code(query: str, case_sensitive: bool = False, file_extensions: Optional[List[str]] = None, max_results: int = 100) -> Tuple[List[Dict], float]:
     """Search for code patterns in the specified directory"""
     start_time = time.time()
     
@@ -102,6 +109,9 @@ def search_code(query: str, case_sensitive: bool = False, max_results: int = 100
     
     all_results = []
     file_count = 0
+    files_searched = 0
+    
+    print(f"Searching for: '{query}' in extensions: {file_extensions}")
     
     try:
         for root, dirs, files in os.walk(SEARCH_ROOT):
@@ -114,10 +124,17 @@ def search_code(query: str, case_sensitive: bool = False, max_results: int = 100
             for file in files:
                 if file.startswith('.'):
                     continue
+                
+                # Filter by file extensions if specified
+                if file_extensions:
+                    file_ext = Path(file).suffix.lower()
+                    if file_ext not in file_extensions:
+                        continue
                     
                 file_path = os.path.join(root, file)
                 relative_path = os.path.relpath(file_path, SEARCH_ROOT)
                 
+                files_searched += 1
                 file_results = search_in_file(file_path, query, case_sensitive)
                 for result in file_results:
                     result['relative_path'] = relative_path
@@ -136,13 +153,50 @@ def search_code(query: str, case_sensitive: bool = False, max_results: int = 100
     end_time = time.time()
     search_time = end_time - start_time
     
+    print(f"Searched {files_searched} files, found {len(all_results)} results")
+    
     return all_results[:max_results], search_time
+
+def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
+    """Parse query to extract file extensions filter"""
+    import re
+    
+    # Check for "+" separator syntax: "search_term + *.ext"
+    if '+' in query:
+        parts = query.split('+', 1)  # Split on first + only
+        if len(parts) == 2:
+            search_part = parts[0].strip()
+            ext_part = parts[1].strip()
+            
+            # Find extension patterns in the second part
+            ext_pattern = r'\*\.([a-zA-Z0-9]+)'
+            extensions = re.findall(ext_pattern, ext_part)
+            
+            if extensions:
+                ext_list = ['.' + ext.lower() for ext in extensions]
+                return search_part, ext_list
+    
+    # Fallback to original logic for backward compatibility
+    # Look for patterns like "*.py", "*.js", "*.ts" etc.
+    ext_pattern = r'\*\.([a-zA-Z0-9]+)'
+    extensions = re.findall(ext_pattern, query)
+    
+    if extensions:
+        # Remove extension patterns from query
+        clean_query = re.sub(r'\s*\*\.[a-zA-Z0-9]+\s*', ' ', query).strip()
+        # Convert to lowercase and add dots
+        ext_list = ['.' + ext.lower() for ext in extensions]
+        return clean_query, ext_list
+    
+    return query, None
 
 @app.get("/", response_class=HTMLResponse)
 async def main(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "query": "", 
+        "clean_query": "",
+        "file_extensions": None,
         "results": [], 
         "search_performed": False,
         "search_time": 0.0,
@@ -154,13 +208,18 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
     results = []
     search_time = 0.0
     search_performed = bool(q.strip())
+    clean_query = q
+    file_extensions = None
     
     if search_performed:
-        results, search_time = search_code(q, case)
+        clean_query, file_extensions = parse_query_with_extensions(q)
+        results, search_time = search_code(clean_query, case, file_extensions)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
         "query": q,
+        "clean_query": clean_query,
+        "file_extensions": file_extensions,
         "results": results,
         "search_performed": search_performed,
         "case_sensitive": case,
@@ -174,13 +233,18 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
     results = []
     search_time = 0.0
     search_performed = bool(query.strip())
+    clean_query = query
+    file_extensions = None
     
     if search_performed:
-        results, search_time = search_code(query, case_sensitive)
+        clean_query, file_extensions = parse_query_with_extensions(query)
+        results, search_time = search_code(clean_query, case_sensitive, file_extensions)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
         "query": query,
+        "clean_query": clean_query,
+        "file_extensions": file_extensions,
         "results": results,
         "search_performed": search_performed,
         "case_sensitive": case_sensitive,
@@ -257,6 +321,37 @@ async def view_file(request: Request, file_path: str):
             "request": request,
             "error": f"Error reading file: {str(e)}"
         })
+
+@app.get("/debug/files")
+async def debug_files():
+    """Debug endpoint to see what files are found"""
+    py_files = []
+    all_files = []
+    
+    for root, dirs, files in os.walk(SEARCH_ROOT):
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {
+            'node_modules', '__pycache__', 'venv', 'env', 'build', 'dist',
+            'target', 'bin', 'obj', '.git', '.svn', '.hg'
+        }]
+        
+        for file in files:
+            if file.startswith('.'):
+                continue
+                
+            file_path = os.path.join(root, file)
+            relative_path = os.path.relpath(file_path, SEARCH_ROOT)
+            all_files.append(relative_path)
+            
+            if file.endswith('.py'):
+                py_files.append(relative_path)
+    
+    return {
+        "search_root": SEARCH_ROOT,
+        "total_files": len(all_files),
+        "py_files_count": len(py_files),
+        "py_files": py_files[:20],  # Show first 20 Python files
+        "all_files_sample": all_files[:20]  # Show first 20 files
+    }
 
 if __name__ == "__main__":
     host = os.getenv("HOST", "0.0.0.0")
