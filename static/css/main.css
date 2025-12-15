@@ -9,7 +9,8 @@ body {
     background: #0f0f0f;
     color: #e5e5e5;
     min-height: 100vh;
-    padding: 20px;
+    margin: 0;
+    padding: 0;
     transition: background 0.3s, color 0.3s;
 }
 
@@ -1045,5 +1046,487 @@ body.light .page-info {
     
     .page-info {
         font-size: 13px;
+    }
+}
+/* New Layout Styles */
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #0f0f0f;
+    border-bottom: 1px solid #2a2a2a;
+    z-index: 100;
+    padding: 12px 20px;
+}
+
+body.light .top-header {
+    background: #ffffff;
+    border-bottom-color: #e5e5e5;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.logo h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #4a9eff;
+    font-weight: 600;
+}
+
+body.light .logo h1 {
+    color: #0066cc;
+}
+
+.top-search-form {
+    flex: 1;
+    max-width: 600px;
+}
+
+.top-search-form .search-input-container {
+    position: relative;
+    margin: 0;
+}
+
+.top-search-form #searchInput {
+    width: 100%;
+    padding: 10px 50px 10px 16px;
+    font-size: 14px;
+    border: 1px solid #2a2a2a;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+body.light .top-search-form #searchInput {
+    background: #ffffff;
+    border-color: #e5e5e5;
+    color: #1a1a1a;
+}
+
+.top-search-form .search-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #888;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.main-container {
+    display: flex;
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+}
+
+.sidebar {
+    width: 280px;
+    background: #1a1a1a;
+    border-right: 1px solid #2a2a2a;
+    padding: 20px;
+    overflow-y: auto;
+    position: fixed;
+    left: 0;
+    top: 60px;
+    bottom: 0;
+}
+
+body.light .sidebar {
+    background: #f8f8f8;
+    border-right-color: #e5e5e5;
+}
+
+.content-area {
+    flex: 1;
+    margin-left: 280px;
+    padding: 20px;
+    max-width: calc(100vw - 300px);
+}
+
+.filter-section {
+    margin-bottom: 24px;
+}
+
+.filter-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e5e5e5;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+body.light .filter-section h3 {
+    color: #1a1a1a;
+}
+
+.filter-item {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.filter-item:hover {
+    background: #2a2a2a;
+}
+
+body.light .filter-item:hover {
+    background: #f0f0f0;
+}
+
+.filter-item.active {
+    background: rgba(74, 158, 255, 0.1);
+    color: #4a9eff;
+}
+
+.filter-item input[type="radio"] {
+    margin: 0;
+    margin-right: 8px;
+}
+
+.filter-item label {
+    font-size: 14px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.repo-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.repo-path {
+    font-size: 12px;
+    color: #888;
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    margin-top: 4px;
+    display: block;
+    word-break: break-all;
+}
+
+body.light .repo-path {
+    color: #666;
+}
+
+.language-filters .filter-item {
+    padding: 6px 0;
+}
+
+/* Update theme toggle position */
+.theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    z-index: 101;
+}
+
+/* Mobile responsiveness for new layout */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .logo {
+        text-align: center;
+    }
+    
+    .top-search-form {
+        max-width: none;
+    }
+    
+    .main-container {
+        flex-direction: column;
+        margin-top: 100px;
+    }
+    
+    .sidebar {
+        position: relative;
+        width: 100%;
+        top: auto;
+        bottom: auto;
+        border-right: none;
+        border-bottom: 1px solid #2a2a2a;
+    }
+    
+    body.light .sidebar {
+        border-bottom-color: #e5e5e5;
+    }
+    
+    .content-area {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 16px;
+    }
+    
+    .filter-section {
+        margin-bottom: 16px;
+    }
+    
+    .language-filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-header {
+        padding: 8px 12px;
+    }
+    
+    .header-content {
+        gap: 8px;
+    }
+    
+    .logo h1 {
+        font-size: 18px;
+    }
+    
+    .main-container {
+        margin-top: 90px;
+    }
+    
+    .sidebar {
+        padding: 16px 12px;
+    }
+    
+    .content-area {
+        padding: 12px;
+    }
+}
+/* Landing Page Styles */
+.landing-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.landing-content {
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+}
+
+.landing-header h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+body.light .landing-header h1 {
+    color: #1a1a1a;
+}
+
+.landing-subtitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #e5e5e5;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+body.light .landing-subtitle {
+    color: #1a1a1a;
+}
+
+.landing-description {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+body.light .landing-description {
+    color: #666;
+}
+
+.landing-search-form {
+    margin-bottom: 40px;
+}
+
+.landing-search-container {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.landing-search-container input {
+    width: 100%;
+    padding: 16px 60px 16px 20px;
+    font-size: 16px;
+    border: 2px solid #2a2a2a;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    border-radius: 8px;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+body.light .landing-search-container input {
+    background: #ffffff;
+    border-color: #e5e5e5;
+    color: #1a1a1a;
+}
+
+.landing-search-container input:focus {
+    outline: none;
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+.landing-search-container input::placeholder {
+    color: #666;
+}
+
+body.light .landing-search-container input::placeholder {
+    color: #999;
+}
+
+.landing-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #888;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 18px;
+    border-radius: 6px;
+}
+
+body.light .landing-search-btn {
+    color: #666;
+}
+
+.landing-search-btn:hover {
+    background: #2a2a2a;
+    color: #e5e5e5;
+}
+
+body.light .landing-search-btn:hover {
+    background: #f5f5f5;
+    color: #1a1a1a;
+}
+
+/* Mobile responsiveness for landing page */
+@media (max-width: 768px) {
+    .landing-header h1 {
+        font-size: 36px;
+    }
+    
+    .landing-subtitle {
+        font-size: 20px;
+    }
+    
+    .landing-description {
+        font-size: 14px;
+        margin-bottom: 32px;
+    }
+    
+    .landing-search-container input {
+        padding: 14px 50px 14px 16px;
+        font-size: 16px;
+    }
+    
+    .landing-search-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-container {
+        padding: 16px;
+    }
+    
+    .landing-header h1 {
+        font-size: 28px;
+    }
+    
+    .landing-subtitle {
+        font-size: 18px;
+    }
+    
+    .landing-description {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+}
+/* Logo Styles */
+.landing-logo {
+    height: 80px;
+    width: auto;
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header-logo {
+    height: 32px;
+    width: auto;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo h1 {
+    margin: 0;
+}
+
+/* Mobile logo adjustments */
+@media (max-width: 768px) {
+    .landing-logo {
+        height: 60px;
+        margin-bottom: 16px;
+    }
+    
+    .header-logo {
+        height: 28px;
+        margin-right: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-logo {
+        height: 50px;
+        margin-bottom: 12px;
+    }
+    
+    .header-logo {
+        height: 24px;
+        margin-right: 6px;
     }
 }

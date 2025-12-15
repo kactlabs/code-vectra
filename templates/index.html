@@ -12,128 +12,209 @@
 <body>
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
 
-    <div class="container">
-        <div class="header">
-            <h1>🔍 Code Vectra</h1>
-            <p class="subtitle">Search through code in {{search_root}}</p>
-        </div>
-
-        <form action="/search" method="POST" class="search-form">
-            <div class="search-input-container">
-                <input type="text" 
-                       name="query" 
-                       value="{{query}}" 
-                       id="searchInput" 
-                       placeholder="Search for code patterns... (use 'term + *.py' or 'term *.py' to filter)"
-                       autocomplete="off">
-                <button type="submit" class="search-btn" title="Search">
-                    🔍
-                </button>
+    {% if not search_performed %}
+    <!-- Landing Page Layout -->
+    <div class="landing-container">
+        <div class="landing-content">
+            <div class="landing-header">
+                <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="landing-logo">
+                <h1>Code Vectra</h1>
+                <p class="landing-subtitle">Local Code Search Engine</p>
+                <p class="landing-description">Effortlessly search through your local codebase with lightning-fast pattern matching and intelligent filtering.</p>
             </div>
             
-            <div class="search-options">
+            <form action="/search" method="POST" class="landing-search-form">
+                <div class="landing-search-container">
+                    <input type="text" 
+                           name="query" 
+                           id="landingSearchInput" 
+                           placeholder="Search"
+                           autocomplete="off">
+                    <button type="submit" class="landing-search-btn" title="Search">
+                        🔍
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <!-- Search Results Layout -->
+    <div class="top-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="header-logo">
+                <h1>Code Vectra</h1>
+            </div>
+            <form action="/search" method="POST" class="top-search-form">
+                <div class="search-input-container">
+                    <input type="text" 
+                           name="query" 
+                           value="{{query}}" 
+                           id="searchInput" 
+                           placeholder="Search code..."
+                           autocomplete="off">
+                    <button type="submit" class="search-btn" title="Search">
+                        🔍
+                    </button>
+                </div>
+                <input type="hidden" name="case_sensitive" value="{% if case_sensitive %}true{% else %}false{% endif %}">
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="filter-section">
+                <h3>Repository</h3>
+                <div class="filter-item">
+                    <span class="repo-name">{{search_root.split('/')[-1] or 'Root'}}</span>
+                    <span class="repo-path">{{search_root}}</span>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>Language</h3>
+                <div class="language-filters">
+                    <div class="filter-item {% if not file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="" id="lang_all" {% if not file_extensions %}checked{% endif %}>
+                        <label for="lang_all">All languages</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.py' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="py" id="lang_py" {% if file_extensions and '.py' in file_extensions %}checked{% endif %}>
+                        <label for="lang_py">Python</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.js' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="js" id="lang_js" {% if file_extensions and '.js' in file_extensions %}checked{% endif %}>
+                        <label for="lang_js">JavaScript</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.ts' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="ts" id="lang_ts" {% if file_extensions and '.ts' in file_extensions %}checked{% endif %}>
+                        <label for="lang_ts">TypeScript</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.java' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="java" id="lang_java" {% if file_extensions and '.java' in file_extensions %}checked{% endif %}>
+                        <label for="lang_java">Java</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.cpp' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="cpp" id="lang_cpp" {% if file_extensions and '.cpp' in file_extensions %}checked{% endif %}>
+                        <label for="lang_cpp">C++</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.go' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="go" id="lang_go" {% if file_extensions and '.go' in file_extensions %}checked{% endif %}>
+                        <label for="lang_go">Go</label>
+                    </div>
+                    <div class="filter-item {% if file_extensions and '.rs' in file_extensions %}active{% endif %}">
+                        <input type="radio" name="lang_filter" value="rs" id="lang_rs" {% if file_extensions and '.rs' in file_extensions %}checked{% endif %}>
+                        <label for="lang_rs">Rust</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>Options</h3>
                 <label class="checkbox-option">
-                    <input type="checkbox" name="case_sensitive" {% if case_sensitive %}checked{% endif %}>
+                    <input type="checkbox" id="case_sensitive" {% if case_sensitive %}checked{% endif %}>
                     <span class="checkmark"></span>
                     Case sensitive
                 </label>
-                <div class="search-help">
-                    <span class="help-text">💡 Tip: Use "term + *.py" or "term *.py *.js" to search specific file types</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-area">
+            <div class="results-header">
+                {% if results %}
+                    <p class="results-count">
+                        Showing {{pagination.start_result}}-{{pagination.end_result}} of {{total_results}} matches
+                        {% if file_extensions %}
+                            in {{file_extensions|join(', ')}} files 
+                        {% endif %}
+                        (time taken: {{search_time}} seconds)
+                    </p>
+                {% elif search_performed %}
+                    <p class="no-results">
+                        No matches found for "{{clean_query}}" 
+                        {% if file_extensions %}
+                            in {{file_extensions|join(', ')}} files 
+                        {% endif %}
+                        (time taken: {{search_time}} seconds)
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="results-container">
+                {% for result in results %}
+                <div class="result-item">
+                    <div class="result-header">
+                        <a href="/file/{{result.relative_path}}" class="file-path-link">{{result.relative_path}}</a>
+                        <span class="line-number">Line {{result.line_number}}</span>
+                    </div>
+                    
+                    <div class="code-context">
+                        {% for context_line in result.context %}
+                        <div class="code-line {% if context_line.is_match %}match-line{% endif %}">
+                            <span class="line-num">{{context_line.line_number}}</span>
+                            <code class="line-content">{{context_line.content}}</code>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if pagination and pagination.total_pages > 1 %}
+            <div class="pagination-container">
+                <div class="pagination">
+                    {% if pagination.has_prev %}
+                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.prev_page}}" class="pagination-btn prev-next">
+                            ← Previous
+                        </a>
+                    {% endif %}
+                    
+                    <div class="pagination-numbers">
+                        {% set start_page = [1, pagination.current_page - 2]|max %}
+                        {% set end_page = [pagination.total_pages, pagination.current_page + 2]|min %}
+                        
+                        {% if start_page > 1 %}
+                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page=1" class="pagination-number">1</a>
+                            {% if start_page > 2 %}
+                                <span class="pagination-ellipsis">...</span>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% for page_num in range(start_page, end_page + 1) %}
+                            {% if page_num == pagination.current_page %}
+                                <span class="pagination-number current">{{page_num}}</span>
+                            {% else %}
+                                <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{page_num}}" class="pagination-number">{{page_num}}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if end_page < pagination.total_pages %}
+                            {% if end_page < pagination.total_pages - 1 %}
+                                <span class="pagination-ellipsis">...</span>
+                            {% endif %}
+                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.total_pages}}" class="pagination-number">{{pagination.total_pages}}</a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if pagination.has_next %}
+                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.next_page}}" class="pagination-btn prev-next">
+                            Next →
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <div class="pagination-info">
+                    <span class="page-info">Showing {{pagination.start_result}}-{{pagination.end_result}} of {{pagination.total_results}} results</span>
                 </div>
             </div>
-        </form>
-
-        {% if search_performed %}
-        <div class="results-header">
-            {% if results %}
-                <p class="results-count">
-                    Showing {{pagination.start_result}}-{{pagination.end_result}} of {{total_results}} matches
-                    {% if file_extensions %}
-                        in {{file_extensions|join(', ')}} files 
-                    {% endif %}
-                    (time taken: {{search_time}} seconds)
-                </p>
-            {% elif search_performed %}
-                <p class="no-results">
-                    No matches found for "{{clean_query}}" 
-                    {% if file_extensions %}
-                        in {{file_extensions|join(', ')}} files 
-                    {% endif %}
-                    (time taken: {{search_time}} seconds)
-                </p>
             {% endif %}
         </div>
-
-        <div class="results-container">
-            {% for result in results %}
-            <div class="result-item">
-                <div class="result-header">
-                    <a href="/file/{{result.relative_path}}" class="file-path-link">{{result.relative_path}}</a>
-                    <span class="line-number">Line {{result.line_number}}</span>
-                </div>
-                
-                <div class="code-context">
-                    {% for context_line in result.context %}
-                    <div class="code-line {% if context_line.is_match %}match-line{% endif %}">
-                        <span class="line-num">{{context_line.line_number}}</span>
-                        <code class="line-content">{{context_line.content}}</code>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        {% if pagination and pagination.total_pages > 1 %}
-        <div class="pagination-container">
-            <div class="pagination">
-                {% if pagination.has_prev %}
-                    <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.prev_page}}" class="pagination-btn prev-next">
-                        ← Previous
-                    </a>
-                {% endif %}
-                
-                <div class="pagination-numbers">
-                    {% set start_page = [1, pagination.current_page - 2]|max %}
-                    {% set end_page = [pagination.total_pages, pagination.current_page + 2]|min %}
-                    
-                    {% if start_page > 1 %}
-                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page=1" class="pagination-number">1</a>
-                        {% if start_page > 2 %}
-                            <span class="pagination-ellipsis">...</span>
-                        {% endif %}
-                    {% endif %}
-                    
-                    {% for page_num in range(start_page, end_page + 1) %}
-                        {% if page_num == pagination.current_page %}
-                            <span class="pagination-number current">{{page_num}}</span>
-                        {% else %}
-                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{page_num}}" class="pagination-number">{{page_num}}</a>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if end_page < pagination.total_pages %}
-                        {% if end_page < pagination.total_pages - 1 %}
-                            <span class="pagination-ellipsis">...</span>
-                        {% endif %}
-                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.total_pages}}" class="pagination-number">{{pagination.total_pages}}</a>
-                    {% endif %}
-                </div>
-                
-                {% if pagination.has_next %}
-                    <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.next_page}}" class="pagination-btn prev-next">
-                        Next →
-                    </a>
-                {% endif %}
-            </div>
-            
-            <div class="pagination-info">
-                <span class="page-info">Showing {{pagination.start_result}}-{{pagination.end_result}} of {{pagination.total_results}} results</span>
-            </div>
-        </div>
-        {% endif %}
-        {% endif %}
     </div>
+    {% endif %}
 
     <div class="toast" id="toast">Copied to clipboard</div>
 
@@ -153,8 +234,45 @@
         // Focus search input on page load
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
+            const landingSearchInput = document.getElementById('landingSearchInput');
+            
             if (searchInput && !searchInput.value) {
                 searchInput.focus();
+            } else if (landingSearchInput) {
+                landingSearchInput.focus();
+            }
+        });
+
+        // Handle language filter changes
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'lang_filter') {
+                const currentQuery = document.getElementById('searchInput').value;
+                if (currentQuery.trim()) {
+                    const langValue = e.target.value;
+                    const caseValue = document.getElementById('case_sensitive').checked;
+                    
+                    let newQuery = currentQuery;
+                    // Remove existing extension filters
+                    newQuery = newQuery.replace(/\s*\+\s*[a-zA-Z0-9,\s]+$/, '').trim();
+                    
+                    // Add new language filter if not "all"
+                    if (langValue) {
+                        newQuery += ' + ' + langValue;
+                    }
+                    
+                    // Redirect with new query
+                    const url = `/search?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
+                    window.location.href = url;
+                }
+            }
+            
+            if (e.target.id === 'case_sensitive') {
+                const currentQuery = document.getElementById('searchInput').value;
+                if (currentQuery.trim()) {
+                    const caseValue = e.target.checked;
+                    const url = `/search?q=${encodeURIComponent(currentQuery)}&case=${caseValue}`;
+                    window.location.href = url;
+                }
             }
         });
 
