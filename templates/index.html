@@ -42,8 +42,10 @@
     <div class="top-header">
         <div class="header-content">
             <div class="logo">
-                <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="header-logo">
-                <h1>Code Vectra</h1>
+                <a href="/" class="logo-link">
+                    <img src="/static/images/code-vectra-bgl.png" alt="Code Vectra" class="header-logo">
+                    <h1>Code Vectra</h1>
+                </a>
             </div>
             <form action="/search" method="POST" class="top-search-form">
                 <div class="search-input-container">
@@ -67,13 +69,17 @@
         <!-- Left Sidebar -->
         <div class="sidebar">
             <div class="filter-section">
-                <h3>Repository</h3>
-                <div class="repo-root">
-                    <div class="filter-item">
-                        <span class="repo-name">📁 {{search_root.split('/')[-1] or 'Root'}}</span>
-                        <span class="repo-path">{{search_root}}</span>
-                    </div>
+                <div class="filter-header">
+                    <h3>Repository</h3>
+                    <button class="clear-filters-btn" onclick="clearPathFilters()" style="display: none;">Clear</button>
                 </div>
+                
+                <!-- Active Path Filters Display -->
+                <div class="active-filters" id="activeFilters" style="display: none;">
+                    <!-- Active filters will be populated by JavaScript -->
+                </div>
+                
+
                 {% if folders %}
                 <div class="folder-list">
                     {% for folder in folders %}
@@ -160,7 +166,7 @@
                 {% for result in results %}
                 <div class="result-item">
                     <div class="result-header">
-                        <a href="/file/{{result.relative_path}}" class="file-path-link">{{result.relative_path}}</a>
+                        <a href="/file/{{result.relative_path}}" class="file-path-link" target="_blank" rel="noopener noreferrer">{{result.relative_path}}</a>
                         <span class="line-number">Line {{result.line_number}}</span>
                     </div>
                     
@@ -253,7 +259,96 @@
             } else if (landingSearchInput) {
                 landingSearchInput.focus();
             }
+            
+            // Display active path filters
+            displayActiveFilters();
         });
+
+        // Display active path filters as tags
+        function displayActiveFilters() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+            
+            const query = searchInput.value;
+            const pathMatches = query.match(/path:([^\s]+)/g);
+            const activeFiltersContainer = document.getElementById('activeFilters');
+            const clearButton = document.querySelector('.clear-filters-btn');
+            
+            if (pathMatches && pathMatches.length > 0) {
+                // Show active filters
+                activeFiltersContainer.style.display = 'block';
+                clearButton.style.display = 'inline-block';
+                
+                // Get active folder names
+                const activeFolders = pathMatches.map(match => match.replace('path:', ''));
+                
+                // Create filter tags
+                const filterTags = pathMatches.map(match => {
+                    const folderName = match.replace('path:', '');
+                    return `
+                        <div class="filter-tag">
+                            <div class="filter-content">
+                                <span class="filter-icon">🍃</span>
+                                <span class="filter-name">${folderName}</span>
+                            </div>
+                            <button class="remove-filter" onclick="removePathFilter('${folderName}')" title="Remove filter">×</button>
+                        </div>
+                    `;
+                }).join('');
+                
+                activeFiltersContainer.innerHTML = filterTags;
+                
+                // Hide checkboxes for folders that are already active
+                hideActiveFolderCheckboxes(activeFolders);
+            } else {
+                // Hide active filters
+                activeFiltersContainer.style.display = 'none';
+                clearButton.style.display = 'none';
+                activeFiltersContainer.innerHTML = '';
+                
+                // Show all folder checkboxes
+                showAllFolderCheckboxes();
+            }
+        }
+
+        // Hide checkboxes for folders that are already active as filters
+        function hideActiveFolderCheckboxes(activeFolders) {
+            document.querySelectorAll('.folder-item').forEach(item => {
+                const checkbox = item.querySelector('input[name="folder_filter"]');
+                if (checkbox && activeFolders.includes(checkbox.value)) {
+                    item.style.display = 'none';
+                } else {
+                    item.style.display = 'flex';
+                }
+            });
+        }
+
+        // Show all folder checkboxes
+        function showAllFolderCheckboxes() {
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.style.display = 'flex';
+            });
+        }
+
+        // Remove a specific path filter
+        function removePathFilter(folderName) {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+            
+            let query = searchInput.value;
+            // Remove the specific path filter
+            query = query.replace(new RegExp(`\\s*path:${folderName}\\s*`, 'g'), ' ').trim();
+            
+            // Uncheck the corresponding checkbox
+            const checkbox = document.querySelector(`input[name="folder_filter"][value="${folderName}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            const caseValue = document.getElementById('case_sensitive').checked;
+            const url = `/search?q=${encodeURIComponent(query)}&case=${caseValue}`;
+            window.location.href = url;
+        }
 
         // Handle language filter changes
         document.addEventListener('change', function(e) {
@@ -310,6 +405,25 @@
                 }
             }
         });
+
+        // Clear path filters and show all results
+        function clearPathFilters() {
+            const currentQuery = document.getElementById('searchInput').value;
+            if (currentQuery.trim()) {
+                let newQuery = currentQuery;
+                // Remove all path filters
+                newQuery = newQuery.replace(/\s*path:[^\s]+/g, '').trim();
+                
+                // Uncheck all folder checkboxes
+                document.querySelectorAll('input[name="folder_filter"]:checked').forEach(cb => {
+                    cb.checked = false;
+                });
+                
+                const caseValue = document.getElementById('case_sensitive').checked;
+                const url = `/search?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
+                window.location.href = url;
+            }
+        }
 
         // Handle keyboard shortcuts
         document.addEventListener('keydown', function(e) {
