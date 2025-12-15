@@ -47,13 +47,13 @@
         <div class="results-header">
             {% if results %}
                 <p class="results-count">
-                    Found {{result_count}} matches 
+                    Showing {{pagination.start_result}}-{{pagination.end_result}} of {{total_results}} matches
                     {% if file_extensions %}
                         in {{file_extensions|join(', ')}} files 
                     {% endif %}
                     (time taken: {{search_time}} seconds)
                 </p>
-            {% else %}
+            {% elif search_performed %}
                 <p class="no-results">
                     No matches found for "{{clean_query}}" 
                     {% if file_extensions %}
@@ -83,6 +83,55 @@
             </div>
             {% endfor %}
         </div>
+
+        {% if pagination and pagination.total_pages > 1 %}
+        <div class="pagination-container">
+            <div class="pagination">
+                {% if pagination.has_prev %}
+                    <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.prev_page}}" class="pagination-btn prev-next">
+                        ← Previous
+                    </a>
+                {% endif %}
+                
+                <div class="pagination-numbers">
+                    {% set start_page = [1, pagination.current_page - 2]|max %}
+                    {% set end_page = [pagination.total_pages, pagination.current_page + 2]|min %}
+                    
+                    {% if start_page > 1 %}
+                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page=1" class="pagination-number">1</a>
+                        {% if start_page > 2 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% for page_num in range(start_page, end_page + 1) %}
+                        {% if page_num == pagination.current_page %}
+                            <span class="pagination-number current">{{page_num}}</span>
+                        {% else %}
+                            <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{page_num}}" class="pagination-number">{{page_num}}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if end_page < pagination.total_pages %}
+                        {% if end_page < pagination.total_pages - 1 %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% endif %}
+                        <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.total_pages}}" class="pagination-number">{{pagination.total_pages}}</a>
+                    {% endif %}
+                </div>
+                
+                {% if pagination.has_next %}
+                    <a href="/search?q={{query|urlencode}}&case={{case_sensitive|lower}}&page={{pagination.next_page}}" class="pagination-btn prev-next">
+                        Next →
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="pagination-info">
+                <span class="page-info">Showing {{pagination.start_result}}-{{pagination.end_result}} of {{pagination.total_results}} results</span>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
     </div>
 

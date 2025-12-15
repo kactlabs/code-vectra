@@ -21,6 +21,7 @@ templates = Jinja2Templates(directory="templates")
 # Configuration from environment variables
 SEARCH_ROOT = os.getenv("SEARCH_ROOT", "/Users/csp/kact/")
 MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", "1048576"))  # Default 1MB
+RESULTS_PER_PAGE = int(os.getenv("RESULTS_PER_PAGE", "25"))  # Default 25 results per page
 SUPPORTED_EXTENSIONS = {
     '.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.sass',
     '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.rb', '.go',
@@ -100,7 +101,7 @@ def search_in_file(file_path: str, pattern: str, case_sensitive: bool = False) -
     
     return results
 
-def search_code(query: str, case_sensitive: bool = False, file_extensions: Optional[List[str]] = None, max_results: int = 100) -> Tuple[List[Dict], float]:
+def search_code(query: str, case_sensitive: bool = False, file_extensions: Optional[List[str]] = None, max_results: int = 1000) -> Tuple[List[Dict], float]:
     """Search for code patterns in the specified directory"""
     start_time = time.time()
     
@@ -157,6 +158,37 @@ def search_code(query: str, case_sensitive: bool = False, file_extensions: Optio
     
     return all_results[:max_results], search_time
 
+def paginate_results(results: List[Dict], page: int, per_page: int = None) -> Tuple[List[Dict], Dict]:
+    """Paginate search results"""
+    if per_page is None:
+        per_page = RESULTS_PER_PAGE
+    
+    total_results = len(results)
+    total_pages = (total_results + per_page - 1) // per_page  # Ceiling division
+    
+    # Ensure page is within valid range
+    page = max(1, min(page, total_pages if total_pages > 0 else 1))
+    
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    
+    paginated_results = results[start_idx:end_idx]
+    
+    pagination_info = {
+        'current_page': page,
+        'total_pages': total_pages,
+        'total_results': total_results,
+        'per_page': per_page,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_page': page - 1 if page > 1 else None,
+        'next_page': page + 1 if page < total_pages else None,
+        'start_result': start_idx + 1 if total_results > 0 else 0,
+        'end_result': min(end_idx, total_results)
+    }
+    
+    return paginated_results, pagination_info
+
 def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
     """Parse query to extract file extensions filter"""
     import re
@@ -200,20 +232,24 @@ async def main(request: Request):
         "results": [], 
         "search_performed": False,
         "search_time": 0.0,
+        "total_results": 0,
+        "pagination": {},
         "search_root": SEARCH_ROOT
     })
 
 @app.get("/search", response_class=HTMLResponse)
-async def search_get(request: Request, q: str = Query(""), case: bool = Query(False)):
+async def search_get(request: Request, q: str = Query(""), case: bool = Query(False), page: int = Query(1)):
     results = []
     search_time = 0.0
     search_performed = bool(q.strip())
     clean_query = q
     file_extensions = None
+    pagination_info = {}
     
     if search_performed:
         clean_query, file_extensions = parse_query_with_extensions(q)
-        results, search_time = search_code(clean_query, case, file_extensions)
+        all_results, search_time = search_code(clean_query, case, file_extensions)
+        results, pagination_info = paginate_results(all_results, page)
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -224,6 +260,8 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
         "search_performed": search_performed,
         "case_sensitive": case,
         "result_count": len(results),
+        "total_results": pagination_info.get('total_results', 0),
+        "pagination": pagination_info,
         "search_time": round(search_time, 2),
         "search_root": SEARCH_ROOT
     })
@@ -235,10 +273,12 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
     search_performed = bool(query.strip())
     clean_query = query
     file_extensions = None
+    pagination_info = {}
     
     if search_performed:
         clean_query, file_extensions = parse_query_with_extensions(query)
-        results, search_time = search_code(clean_query, case_sensitive, file_extensions)
+        all_results, search_time = search_code(clean_query, case_sensitive, file_extensions)
+        results, pagination_info = paginate_results(all_results, 1)  # Always start at page 1 for POST
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -249,6 +289,8 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
         "search_performed": search_performed,
         "case_sensitive": case_sensitive,
         "result_count": len(results),
+        "total_results": pagination_info.get('total_results', 0),
+        "pagination": pagination_info,
         "search_time": round(search_time, 2),
         "search_root": SEARCH_ROOT
     })

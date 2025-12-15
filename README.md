@@ -14,6 +14,7 @@ A fast, web-based code search engine similar to grep.app that searches through y
 - 📄 **File viewer** - click on file paths to view complete file content
 - 🎨 **Syntax highlighting** for popular programming languages
 - ⬇️ **Download files** directly from the viewer
+- 📄 **Pagination** - results are paginated with 25 matches per page
 
 ## Setup
 
@@ -34,6 +35,9 @@ SEARCH_ROOT=/path/to/your/code/directory
 
 # Maximum file size to search (in bytes)
 MAX_FILE_SIZE=1048576
+
+# Pagination settings
+RESULTS_PER_PAGE=25
 
 # Server configuration
 HOST=0.0.0.0
@@ -88,6 +92,7 @@ You can customize the search behavior by modifying the `.env` file:
 
 - `SEARCH_ROOT`: Directory to search in
 - `MAX_FILE_SIZE`: Maximum file size to search (default: 1MB)
+- `RESULTS_PER_PAGE`: Number of search results per page (default: 25)
 - `HOST`: Server host (default: 0.0.0.0)
 - `PORT`: Server port (default: 8001)
 
