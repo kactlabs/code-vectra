@@ -5,40 +5,70 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theme 2</title>
+    <title>Code Search - Local Grep</title>
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 
 <body>
-
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
 
     <div class="container">
-
-        <h1>Password Generator</h1>
-        <p class="subtitle">Generate secure passwords with custom patterns</p>
-
-        <div class="password-display">
-            <input type="text" value="{{rand_pass}}" id="myInput" placeholder="Click generate to create password"
-                readonly>
-            <button class="copy-btn" onclick="copyPassword()" title="Copy to clipboard">
-                📋
-            </button>
+        <div class="header">
+            <h1>🔍 Code Search</h1>
+            <p class="subtitle">Search through code in /Users/csp/kact/</p>
         </div>
 
-        <form action="/" method="POST">
-            <div class="pattern-selector">
-                <div class="pattern-option">
-                    <input type="radio" id="pattern1" name="pattern" value="1" {% if pattern=="1" %}checked{% endif %}>
-                    <label for="pattern1">Pattern 1</label>
+        <form action="/search" method="POST" class="search-form">
+            <div class="search-input-container">
+                <input type="text" 
+                       name="query" 
+                       value="{{query}}" 
+                       id="searchInput" 
+                       placeholder="Search for code patterns, functions, variables..."
+                       autocomplete="off">
+                <button type="submit" class="search-btn" title="Search">
+                    🔍
+                </button>
+            </div>
+            
+            <div class="search-options">
+                <label class="checkbox-option">
+                    <input type="checkbox" name="case_sensitive" {% if case_sensitive %}checked{% endif %}>
+                    <span class="checkmark"></span>
+                    Case sensitive
+                </label>
+            </div>
+        </form>
+
+        {% if search_performed %}
+        <div class="results-header">
+            {% if results %}
+                <p class="results-count">Found {{result_count}} matches</p>
+            {% else %}
+                <p class="no-results">No matches found for "{{query}}"</p>
+            {% endif %}
+        </div>
+
+        <div class="results-container">
+            {% for result in results %}
+            <div class="result-item">
+                <div class="result-header">
+                    <span class="file-path">{{result.relative_path}}</span>
+                    <span class="line-number">Line {{result.line_number}}</span>
                 </div>
-                <div class="pattern-option">
-                    <input type="radio" id="pattern2" name="pattern" value="2" {% if pattern=="2" %}checked{% endif %}>
-                    <label for="pattern2">Pattern 2</label>
+                
+                <div class="code-context">
+                    {% for context_line in result.context %}
+                    <div class="code-line {% if context_line.is_match %}match-line{% endif %}">
+                        <span class="line-num">{{context_line.line_number}}</span>
+                        <code class="line-content">{{context_line.content}}</code>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            <button type="submit" class="generate-btn">Generate Password</button>
-        </form>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <div class="toast" id="toast">Copied to clipboard</div>
@@ -56,20 +86,40 @@
             localStorage.setItem('theme', theme);
         }
 
-        function copyPassword() {
-            var copyText = document.getElementById("myInput");
-            if (copyText.value) {
-                copyText.select();
-                copyText.setSelectionRange(0, 99999);
-                document.execCommand("copy");
-
-                // Show toast notification
-                var toast = document.getElementById("toast");
-                toast.classList.add("show");
-                setTimeout(function () {
-                    toast.classList.remove("show");
-                }, 2000);
+        // Focus search input on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && !searchInput.value) {
+                searchInput.focus();
             }
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+
+        // Copy code line on click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('line-content')) {
+                const text = e.target.textContent;
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast('Code line copied to clipboard');
+                });
+            }
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2000);
         }
     </script>
 </body>
