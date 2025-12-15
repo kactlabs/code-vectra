@@ -68,10 +68,22 @@
         <div class="sidebar">
             <div class="filter-section">
                 <h3>Repository</h3>
-                <div class="filter-item">
-                    <span class="repo-name">{{search_root.split('/')[-1] or 'Root'}}</span>
-                    <span class="repo-path">{{search_root}}</span>
+                <div class="repo-root">
+                    <div class="filter-item">
+                        <span class="repo-name">📁 {{search_root.split('/')[-1] or 'Root'}}</span>
+                        <span class="repo-path">{{search_root}}</span>
+                    </div>
                 </div>
+                {% if folders %}
+                <div class="folder-list">
+                    {% for folder in folders %}
+                    <div class="filter-item folder-item">
+                        <input type="checkbox" name="folder_filter" value="{{folder}}" id="folder_{{loop.index}}">
+                        <label for="folder_{{loop.index}}">📂 {{folder}}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
 
             <div class="filter-section">
@@ -262,6 +274,29 @@
                     
                     // Redirect with new query
                     const url = `/search?q=${encodeURIComponent(newQuery)}&case=${caseValue}`;
+                    window.location.href = url;
+                }
+            }
+            
+            if (e.target.name === 'folder_filter') {
+                // Handle folder filtering
+                const currentQuery = document.getElementById('searchInput').value;
+                if (currentQuery.trim()) {
+                    const checkedFolders = Array.from(document.querySelectorAll('input[name="folder_filter"]:checked'))
+                        .map(cb => cb.value);
+                    
+                    let newQuery = currentQuery;
+                    // Remove existing path filters (assuming format like "path:folder")
+                    newQuery = newQuery.replace(/\s*path:[^\s]+/g, '').trim();
+                    
+                    // Add folder filters
+                    if (checkedFolders.length > 0) {
+                        const folderFilters = checkedFolders.map(folder => `path:${folder}`).join(' ');
+                        newQuery += ' ' + folderFilters;
+                    }
+                    
+                    const caseValue = document.getElementById('case_sensitive').checked;
+                    const url = `/search?q=${encodeURIComponent(newQuery.trim())}&case=${caseValue}`;
                     window.location.href = url;
                 }
             }

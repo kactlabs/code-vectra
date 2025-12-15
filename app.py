@@ -13,6 +13,8 @@ from business import (
     parse_query_with_extensions,
     is_text_file,
     get_debug_info,
+    get_direct_folders,
+    get_folders_with_results,
     SEARCH_ROOT,
     MAX_FILE_SIZE
 )
@@ -23,6 +25,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def main(request: Request):
+    folders = get_direct_folders()
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "query": "", 
@@ -33,7 +36,8 @@ async def main(request: Request):
         "search_time": 0.0,
         "total_results": 0,
         "pagination": {},
-        "search_root": SEARCH_ROOT
+        "search_root": SEARCH_ROOT,
+        "folders": folders
     })
 
 @app.get("/search", response_class=HTMLResponse)
@@ -44,11 +48,15 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
     clean_query = q
     file_extensions = None
     pagination_info = {}
+    folders = []
     
     if search_performed:
-        clean_query, file_extensions = parse_query_with_extensions(q)
-        all_results, search_time = search_code(clean_query, case, file_extensions)
+        clean_query, file_extensions, path_filters = parse_query_with_extensions(q)
+        all_results, search_time, folders_with_results = search_code(clean_query, case, file_extensions, path_filters)
         results, pagination_info = paginate_results(all_results, page)
+        folders = get_folders_with_results(folders_with_results)
+    else:
+        folders = get_direct_folders()
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -62,7 +70,8 @@ async def search_get(request: Request, q: str = Query(""), case: bool = Query(Fa
         "total_results": pagination_info.get('total_results', 0),
         "pagination": pagination_info,
         "search_time": round(search_time, 2),
-        "search_root": SEARCH_ROOT
+        "search_root": SEARCH_ROOT,
+        "folders": folders
     })
 
 @app.post("/search", response_class=HTMLResponse)
@@ -73,11 +82,15 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
     clean_query = query
     file_extensions = None
     pagination_info = {}
+    folders = []
     
     if search_performed:
-        clean_query, file_extensions = parse_query_with_extensions(query)
-        all_results, search_time = search_code(clean_query, case_sensitive, file_extensions)
+        clean_query, file_extensions, path_filters = parse_query_with_extensions(query)
+        all_results, search_time, folders_with_results = search_code(clean_query, case_sensitive, file_extensions, path_filters)
         results, pagination_info = paginate_results(all_results, 1)  # Always start at page 1 for POST
+        folders = get_folders_with_results(folders_with_results)
+    else:
+        folders = get_direct_folders()
     
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -91,7 +104,8 @@ async def search_post(request: Request, query: str = Form(""), case_sensitive: b
         "total_results": pagination_info.get('total_results', 0),
         "pagination": pagination_info,
         "search_time": round(search_time, 2),
-        "search_root": SEARCH_ROOT
+        "search_root": SEARCH_ROOT,
+        "folders": folders
     })
 
 @app.get("/file/{file_path:path}", response_class=HTMLResponse)

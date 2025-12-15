@@ -1530,3 +1530,86 @@ body.light .landing-search-btn:hover {
         margin-right: 6px;
     }
 }
+/* Repository folder styles */
+.repo-root {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+body.light .repo-root {
+    border-bottom-color: #e5e5e5;
+}
+
+.folder-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.folder-item {
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.folder-item input[type="checkbox"] {
+    margin-right: 6px;
+    transform: scale(0.9);
+}
+
+.folder-item label {
+    font-size: 13px;
+    color: #ccc;
+    cursor: pointer;
+}
+
+body.light .folder-item label {
+    color: #555;
+}
+
+.folder-item:hover label {
+    color: #4a9eff;
+}
+
+body.light .folder-item:hover label {
+    color: #0066cc;
+}
+
+.folder-item input[type="checkbox"]:checked + label {
+    color: #4a9eff;
+    font-weight: 500;
+}
+
+body.light .folder-item input[type="checkbox"]:checked + label {
+    color: #0066cc;
+}
+
+/* Scrollbar styling for folder list */
+.folder-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.folder-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+body.light .folder-list::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+.folder-list::-webkit-scrollbar-thumb {
+    background: #404040;
+    border-radius: 3px;
+}
+
+body.light .folder-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+}
+
+.folder-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+body.light .folder-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}

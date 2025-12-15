@@ -175,18 +175,19 @@ def search_in_file(file_path: str, pattern: str, case_sensitive: bool = False) -
     
     return results
 
-def search_code(query: str, case_sensitive: bool = False, file_extensions: Optional[List[str]] = None, max_results: int = 1000) -> Tuple[List[Dict], float]:
+def search_code(query: str, case_sensitive: bool = False, file_extensions: Optional[List[str]] = None, path_filters: Optional[List[str]] = None, max_results: int = 1000) -> Tuple[List[Dict], float, set]:
     """Search for code patterns in the specified directory"""
     start_time = time.time()
     
     if not query.strip():
-        return [], 0.0
+        return [], 0.0, set()
     
     all_results = []
     file_count = 0
     files_searched = 0
+    folders_with_results = set()
     
-    print(f"Searching for: '{query}' in extensions: {file_extensions}")
+    print(f"Searching for: '{query}' in extensions: {file_extensions}, paths: {path_filters}")
     
     try:
         for root, dirs, files in os.walk(SEARCH_ROOT):
@@ -195,6 +196,19 @@ def search_code(query: str, case_sensitive: bool = False, file_extensions: Optio
                 'node_modules', '__pycache__', 'venv', 'env', 'build', 'dist',
                 'target', 'bin', 'obj', '.git', '.svn', '.hg'
             }]
+            
+            # Filter by path if path filters are specified
+            if path_filters:
+                relative_root = os.path.relpath(root, SEARCH_ROOT)
+                if relative_root == '.':  # We're in the root directory
+                    # Only process if we're looking for files in root or if any path filter matches current dirs
+                    if not any(path_filter in dirs for path_filter in path_filters):
+                        continue
+                else:
+                    # Check if current path matches any of the path filters
+                    path_parts = relative_root.split(os.sep)
+                    if not any(path_filter in path_parts for path_filter in path_filters):
+                        continue
             
             for file in files:
                 if file.startswith('.'):
@@ -215,9 +229,17 @@ def search_code(query: str, case_sensitive: bool = False, file_extensions: Optio
                 
                 files_searched += 1
                 file_results = search_in_file(file_path, query, case_sensitive)
-                for result in file_results:
-                    result['relative_path'] = relative_path
-                    all_results.append(result)
+                
+                if file_results:  # If this file has results
+                    # Get the top-level folder for this file
+                    path_parts = relative_path.split(os.sep)
+                    if len(path_parts) > 1:  # File is in a subdirectory
+                        top_folder = path_parts[0]
+                        folders_with_results.add(top_folder)
+                    
+                    for result in file_results:
+                        result['relative_path'] = relative_path
+                        all_results.append(result)
                     
                 file_count += 1
                 if len(all_results) >= max_results:
@@ -234,7 +256,7 @@ def search_code(query: str, case_sensitive: bool = False, file_extensions: Optio
     
     print(f"Searched {files_searched} files, found {len(all_results)} results")
     
-    return all_results[:max_results], search_time
+    return all_results[:max_results], search_time, folders_with_results
 
 def paginate_results(results: List[Dict], page: int, per_page: int = None) -> Tuple[List[Dict], Dict]:
     """Paginate search results"""
@@ -267,13 +289,21 @@ def paginate_results(results: List[Dict], page: int, per_page: int = None) -> Tu
     
     return paginated_results, pagination_info
 
-def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
-    """Parse query to extract file extensions filter"""
+def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]], Optional[List[str]]]:
+    """Parse query to extract file extensions filter and path filters"""
     import re
     
+    # Extract path filters first
+    path_pattern = r'path:([^\s]+)'
+    path_matches = re.findall(path_pattern, query)
+    path_filters = path_matches if path_matches else None
+    
+    # Remove path filters from query
+    clean_query = re.sub(r'\s*path:[^\s]+\s*', ' ', query).strip()
+    
     # Check for "+" separator syntax: "search_term + ext" or "search_term + *.ext"
-    if '+' in query:
-        parts = query.split('+', 1)  # Split on first + only
+    if '+' in clean_query:
+        parts = clean_query.split('+', 1)  # Split on first + only
         if len(parts) == 2:
             search_part = parts[0].strip()
             ext_part = parts[1].strip()
@@ -284,7 +314,7 @@ def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
             
             if extensions:
                 ext_list = ['.' + ext.lower() for ext in extensions]
-                return search_part, ext_list
+                return search_part, ext_list, path_filters
             
             # If no *.ext pattern found, treat the whole ext_part as extension names
             # Split by spaces and commas to handle multiple extensions
@@ -298,21 +328,39 @@ def parse_query_with_extensions(query: str) -> Tuple[str, Optional[List[str]]]:
                     ext_list.append(ext.lower())
             
             if ext_list:
-                return search_part, ext_list
+                return search_part, ext_list, path_filters
     
     # Fallback to original logic for backward compatibility
     # Look for patterns like "*.py", "*.js", "*.ts" etc.
     ext_pattern = r'\*\.([a-zA-Z0-9]+)'
-    extensions = re.findall(ext_pattern, query)
+    extensions = re.findall(ext_pattern, clean_query)
     
     if extensions:
         # Remove extension patterns from query
-        clean_query = re.sub(r'\s*\*\.[a-zA-Z0-9]+\s*', ' ', query).strip()
+        final_query = re.sub(r'\s*\*\.[a-zA-Z0-9]+\s*', ' ', clean_query).strip()
         # Convert to lowercase and add dots
         ext_list = ['.' + ext.lower() for ext in extensions]
-        return clean_query, ext_list
+        return final_query, ext_list, path_filters
     
-    return query, None
+    return clean_query, None, path_filters
+
+def get_direct_folders() -> List[str]:
+    """Get all direct folders in the search root directory"""
+    try:
+        folders = []
+        for item in os.listdir(SEARCH_ROOT):
+            item_path = os.path.join(SEARCH_ROOT, item)
+            if os.path.isdir(item_path) and not item.startswith('.'):
+                folders.append(item)
+        return sorted(folders)
+    except Exception as e:
+        print(f"Error getting directories: {e}")
+        return []
+
+def get_folders_with_results(folders_with_results: set) -> List[str]:
+    """Filter direct folders to only show those with search results"""
+    all_folders = get_direct_folders()
+    return [folder for folder in all_folders if folder in folders_with_results]
 
 def get_debug_info() -> Dict:
     """Get debug information about files in the search directory"""
