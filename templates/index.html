@@ -167,12 +167,44 @@
             }
         });
 
-        // Copy code line on click
-        document.addEventListener('click', function(e) {
+        // Copy code line on double-click (instead of single click)
+        document.addEventListener('dblclick', function(e) {
             if (e.target.classList.contains('line-content')) {
                 const text = e.target.textContent;
                 copyTextToClipboard(text, 'Code line copied to clipboard');
             }
+        });
+
+        // Copy selected text on Ctrl/Cmd+C when text is selected
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                if (selectedText) {
+                    // Explicitly copy to clipboard
+                    copyTextToClipboard(selectedText, 'Selected text copied to clipboard');
+                    e.preventDefault(); // Prevent default to avoid double copying
+                }
+            }
+        });
+
+        // Auto-copy selected text when selection changes (like iTerm2)
+        document.addEventListener('mouseup', function(e) {
+            setTimeout(() => {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                if (selectedText && selectedText.length > 0) {
+                    // Only auto-copy if selection is within code content
+                    const range = selection.getRangeAt(0);
+                    const container = range.commonAncestorContainer;
+                    const codeElement = container.nodeType === Node.TEXT_NODE ? 
+                        container.parentElement : container;
+                    
+                    if (codeElement.closest('.line-content')) {
+                        copyTextToClipboard(selectedText, `"${selectedText}" copied to clipboard`);
+                    }
+                }
+            }, 10);
         });
 
         function copyTextToClipboard(text, successMessage) {

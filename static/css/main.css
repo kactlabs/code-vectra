@@ -315,8 +315,9 @@ body.light .line-num {
     color: #e5e5e5;
     white-space: pre;
     overflow-x: auto;
-    cursor: pointer;
+    cursor: text;
     flex: 1;
+    user-select: text;
 }
 
 body.light .line-content {
