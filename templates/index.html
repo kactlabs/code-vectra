@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme 2</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+
+<body>
+
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">◐</button>
+
+    <div class="container">
+
+        <h1>Password Generator</h1>
+        <p class="subtitle">Generate secure passwords with custom patterns</p>
+
+        <div class="password-display">
+            <input type="text" value="{{rand_pass}}" id="myInput" placeholder="Click generate to create password"
+                readonly>
+            <button class="copy-btn" onclick="copyPassword()" title="Copy to clipboard">
+                📋
+            </button>
+        </div>
+
+        <form action="/" method="POST">
+            <div class="pattern-selector">
+                <div class="pattern-option">
+                    <input type="radio" id="pattern1" name="pattern" value="1" {% if pattern=="1" %}checked{% endif %}>
+                    <label for="pattern1">Pattern 1</label>
+                </div>
+                <div class="pattern-option">
+                    <input type="radio" id="pattern2" name="pattern" value="2" {% if pattern=="2" %}checked{% endif %}>
+                    <label for="pattern2">Pattern 2</label>
+                </div>
+            </div>
+            <button type="submit" class="generate-btn">Generate Password</button>
+        </form>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard</div>
+
+    <script>
+        // Load theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            const theme = document.body.classList.contains('light') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+        }
+
+        function copyPassword() {
+            var copyText = document.getElementById("myInput");
+            if (copyText.value) {
+                copyText.select();
+                copyText.setSelectionRange(0, 99999);
+                document.execCommand("copy");
+
+                // Show toast notification
+                var toast = document.getElementById("toast");
+                toast.classList.add("show");
+                setTimeout(function () {
+                    toast.classList.remove("show");
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+
+</html>
