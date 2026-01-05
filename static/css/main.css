@@ -1483,7 +1483,7 @@ body.light .landing-search-btn:hover {
 }
 /* Logo Styles */
 .landing-logo {
-    height: 80px;
+    height: 200px;
     width: auto;
     margin-bottom: 20px;
     display: block;
@@ -1510,7 +1510,7 @@ body.light .landing-search-btn:hover {
 /* Mobile logo adjustments */
 @media (max-width: 768px) {
     .landing-logo {
-        height: 60px;
+        height: 150px;
         margin-bottom: 16px;
     }
     
@@ -1522,7 +1522,7 @@ body.light .landing-search-btn:hover {
 
 @media (max-width: 480px) {
     .landing-logo {
-        height: 50px;
+        height: 120px;
         margin-bottom: 12px;
     }
     
